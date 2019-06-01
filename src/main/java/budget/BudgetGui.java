@@ -1,9 +1,11 @@
 package budget;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+
 import javafx.application.Application;
-import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -15,10 +17,10 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
-import javafx.scene.control.ToolBar;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 public class BudgetGui extends Application {
@@ -171,7 +173,27 @@ public class BudgetGui extends Application {
         final Menu fileMenu = new Menu("File");
         final ObservableList<MenuItem> fileMenuItems = fileMenu.getItems();
         fileMenuItems.add(new MenuItem("Open"));
-        fileMenuItems.add(new MenuItem("Save"));
+        final MenuItem saveItem = new MenuItem("Save");
+        saveItem.setOnAction(a -> {
+            final FileChooser fileChooser = new FileChooser();
+            final File file = fileChooser.showSaveDialog(stage);
+            if (file == null) {
+                throw new IllegalArgumentException("No file chosen");
+            }
+            try (final BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+                for (final Category category : categories) {
+                    writer.write(category.getName());
+                    writer.write(",");
+                    writer.write(Integer.toString(category.getPercentage()));
+                    writer.write(",");
+                    writer.write(Double.toString(category.getAmount()));
+                    writer.write(System.getProperty("line.separator"));
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+        fileMenuItems.add(saveItem);
         menuBar.getMenus().add(fileMenu);
         border.setTop(menuBar);
         border.setCenter(grid);
