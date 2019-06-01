@@ -70,6 +70,46 @@ public class BudgetGui extends Application {
         static Category gifts(final int totalAmount) {
             return new Category.Default("Gifts", 10, totalAmount);
         }
+
+        static Category saving(final int totalAmount) {
+            return new Category.Default("Saving", 5, totalAmount);
+        }
+
+        static Category housing(final int totalAmount) {
+            return new Category.Default("Housing", 25, totalAmount);
+        }
+
+        static Category utilities(final int totalAmount) {
+            return new Category.Default("Utilities", 5, totalAmount);
+        }
+
+        static Category food(final int totalAmount) {
+            return new Category.Default("Food", 5, totalAmount);
+        }
+
+        static Category transportation(final int totalAmount) {
+            return new Category.Default("Transportation", 10, totalAmount);
+        }
+
+        static Category clothing(final int totalAmount) {
+            return new Category.Default("Clothing", 10, totalAmount);
+        }
+
+        static Category medical(final int totalAmount) {
+            return new Category.Default("Medical/Health", 5, totalAmount);
+        }
+
+        static Category personal(final int totalAmount) {
+            return new Category.Default("Personal", 5, totalAmount);
+        }
+
+        static Category recreation(final int totalAmount) {
+            return new Category.Default("Recreation", 5, totalAmount);
+        }
+
+        static Category debts(final int totalAmount) {
+            return new Category.Default("Debts", 5, totalAmount);
+        }
     }
 
     @Override
@@ -79,7 +119,7 @@ public class BudgetGui extends Application {
         grid.setVgap(10);
         grid.setPadding(new Insets(0, 10, 0, 10));
 
-        final Label amountLabel = new Label("Amount:");
+        final Label amountLabel = new Label("Income:");
         grid.add(amountLabel, 0, 0);
         final TextField amountField = new TextField();
         final int totalAmount = 1000;
@@ -92,7 +132,11 @@ public class BudgetGui extends Application {
         percentLeftField.setEditable(false);
         Integer percentLeft = 100;
 
-        ObservableList<Category> categories = FXCollections.observableArrayList(Category.gifts(totalAmount));
+        ObservableList<Category> categories = FXCollections.observableArrayList(Category.gifts(totalAmount),
+                Category.saving(totalAmount), Category.housing(totalAmount), Category.utilities(totalAmount),
+                Category.food(totalAmount), Category.transportation(totalAmount), Category.clothing(totalAmount),
+                Category.medical(totalAmount), Category.personal(totalAmount), Category.recreation(totalAmount),
+                Category.debts(totalAmount));
         for (final Category category : categories) {
             percentLeft = percentLeft - category.getPercentage();
         }
