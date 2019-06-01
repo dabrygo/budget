@@ -9,10 +9,15 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ToolBar;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 
@@ -114,6 +119,7 @@ public class BudgetGui extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
+
         final GridPane grid = new GridPane();
         grid.setHgap(10);
         grid.setVgap(10);
@@ -122,7 +128,7 @@ public class BudgetGui extends Application {
         final Label amountLabel = new Label("Income:");
         grid.add(amountLabel, 0, 0);
         final TextField amountField = new TextField();
-        final int totalAmount = 1000;
+        final int totalAmount = 1;
         amountField.setText(Integer.toString(totalAmount));
         grid.add(amountField, 1, 0);
 
@@ -160,7 +166,17 @@ public class BudgetGui extends Application {
         columns.addAll(categoryColumn, percentageColumn, amountColumn);
         grid.add(table, 0, 2, 2, 1);
 
-        final Scene scene = new Scene(grid);
+        final BorderPane border = new BorderPane();
+        final MenuBar menuBar = new MenuBar();
+        final Menu fileMenu = new Menu("File");
+        final ObservableList<MenuItem> fileMenuItems = fileMenu.getItems();
+        fileMenuItems.add(new MenuItem("Open"));
+        fileMenuItems.add(new MenuItem("Save"));
+        menuBar.getMenus().add(fileMenu);
+        border.setTop(menuBar);
+        border.setCenter(grid);
+
+        final Scene scene = new Scene(border);
         stage.setScene(scene);
         stage.show();
     }
