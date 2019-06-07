@@ -4,11 +4,14 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import javafx.application.Application;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -56,7 +59,7 @@ public class BudgetGui extends Application {
             public int percentUnallocated() {
                 int percentLeft = 100;
                 for (final Category category : mCategories) {
-                    percentLeft = percentLeft - category.getPercentage();
+                    percentLeft = percentLeft - category.percentageProperty().getValue();
                 }
                 return percentLeft;
             }
@@ -91,25 +94,37 @@ public class BudgetGui extends Application {
          */
         String getName();
 
+        int getPercentage();
+
+        void setPercentage(int percentage);
+
         /**
          * What portion of budget this category has.
          */
-        int getPercentage();
+        SimpleIntegerProperty percentageProperty();
 
         /**
          * Dollar amount of portion of budget this category has.
          */
         double getAmount();
 
+        SimpleDoubleProperty amountProperty();
+
+        void setAmount(double amount);
+
+        void setTotalAmount(int totalAmount);
+
         final class Default implements Category {
             private final String mName;
-            private final int mPercentage;
-            private final int mTotalAmount;
+            private final SimpleIntegerProperty mPercentage;
+            private final SimpleIntegerProperty mTotalAmount;
+            private final SimpleDoubleProperty mAmount;
 
             public Default(final String name, final int percentage, final int totalAmount) {
                 mName = name;
-                mPercentage = percentage;
-                mTotalAmount = totalAmount;
+                mPercentage = new SimpleIntegerProperty(percentage);
+                mTotalAmount = new SimpleIntegerProperty(totalAmount);
+                mAmount = new SimpleDoubleProperty((percentage / 100.0) * totalAmount);
             }
 
             @Override
@@ -122,12 +137,41 @@ public class BudgetGui extends Application {
              */
             @Override
             public int getPercentage() {
+                return mPercentage.getValue();
+            }
+
+            @Override
+            public void setPercentage(int percentage) {
+                mPercentage.setValue(percentage);
+            }
+
+            /**
+             * 
+             */
+            @Override
+            public SimpleIntegerProperty percentageProperty() {
                 return mPercentage;
             }
 
             @Override
             public double getAmount() {
-                return (mPercentage / 100.0) * mTotalAmount;
+                return mAmount.getValue();
+            }
+
+            @Override
+            public void setAmount(double amount) {
+                mAmount.set(amount);
+            }
+
+            @Override
+            public SimpleDoubleProperty amountProperty() {
+                mAmount.setValue((mPercentage.getValue() / 100.0) * mTotalAmount.getValue());
+                return mAmount;
+            }
+
+            @Override
+            public void setTotalAmount(int totalAmount) {
+                mTotalAmount.setValue(totalAmount);
             }
         }
 
@@ -176,6 +220,90 @@ public class BudgetGui extends Application {
         }
     }
 
+    interface Categories {
+        Category category(final String name);
+
+        void setPercentage(String category, int percentage);
+
+        void updateTotal(int amount);
+
+        int percentageLeft();
+
+        TableView<Category> table();
+
+        final class Default implements Categories {
+            private final ObservableList<Category> mCategories;
+
+            public Default(final ObservableList<Category> categories) {
+                mCategories = categories;
+            }
+
+            @Override
+            public Category category(final String name) {
+                for (final Category category : mCategories) {
+                    if (name.equals(category.getName())) {
+                        return category;
+                    }
+                }
+                throw new IllegalArgumentException("Unknown category '" + name + "'");
+            }
+
+            @Override
+            public void setPercentage(final String name, final int percentage) {
+                final Category category = category(name);
+                category.setPercentage(percentage);
+            }
+
+            @Override
+            public void updateTotal(final int newTotal) {
+                for (final Category category : mCategories) {
+                    category.setTotalAmount(newTotal);
+                    System.out.println(category.getAmount());
+                }
+            }
+
+            @Override
+            public int percentageLeft() {
+                int total = 100;
+                for (final Category category : mCategories) {
+                    final int percentage = category.percentageProperty().getValue();
+                    total -= percentage;
+                }
+                return total;
+            }
+
+            @Override
+            public TableView<Category> table() {
+                final TableView<Category> table = new TableView<>();
+
+                table.setItems(mCategories);
+                table.setEditable(true);
+
+                final TableColumn<Category, String> categoryColumn = new TableColumn<>("Category");
+                categoryColumn.setCellValueFactory(new PropertyValueFactory<Category, String>("name"));
+
+                final TableColumn<Category, Integer> percentageColumn = new TableColumn<>("Percentage");
+                percentageColumn.setCellValueFactory(new PropertyValueFactory<Category, Integer>("percentage"));
+
+                final TableColumn<Category, Double> amountColumn = new TableColumn<>("Amount");
+                amountColumn.setCellValueFactory(new PropertyValueFactory<Category, Double>("amount"));
+
+                final ObservableList columns = table.getColumns();
+                columns.addAll(categoryColumn, percentageColumn, amountColumn);
+                return table;
+            }
+        }
+
+        static Categories standard(final int totalAmount) {
+            ObservableList<Category> categories = FXCollections.observableArrayList(Category.gifts(totalAmount),
+                    Category.saving(totalAmount), Category.housing(totalAmount), Category.utilities(totalAmount),
+                    Category.food(totalAmount), Category.transportation(totalAmount), Category.clothing(totalAmount),
+                    Category.medical(totalAmount), Category.personal(totalAmount), Category.recreation(totalAmount),
+                    Category.debts(totalAmount));
+            return new Categories.Default(categories);
+        }
+    }
+
     @Override
     public void start(Stage stage) throws Exception {
 
@@ -189,43 +317,25 @@ public class BudgetGui extends Application {
         final TextField amountField = new TextField();
         final int totalAmount = 1;
         amountField.setText(Integer.toString(totalAmount));
-        amountField.setOnAction(a -> {
-
-        });
         grid.add(amountField, 1, 0);
 
         final Label percentLeftLabel = new Label("Percent Left:");
         grid.add(percentLeftLabel, 0, 1);
         final TextField percentLeftField = new TextField();
         percentLeftField.setEditable(false);
-        Integer percentLeft = 100;
 
-        ObservableList<Category> categories = FXCollections.observableArrayList(Category.gifts(totalAmount),
-                Category.saving(totalAmount), Category.housing(totalAmount), Category.utilities(totalAmount),
-                Category.food(totalAmount), Category.transportation(totalAmount), Category.clothing(totalAmount),
-                Category.medical(totalAmount), Category.personal(totalAmount), Category.recreation(totalAmount),
-                Category.debts(totalAmount));
-        for (final Category category : categories) {
-            percentLeft = percentLeft - category.getPercentage();
-        }
-        percentLeftField.setText(Integer.toString(percentLeft));
+        final Categories categories = Categories.standard(totalAmount);
+        percentLeftField.setText(Integer.toString(categories.percentageLeft()));
         grid.add(percentLeftField, 1, 1);
 
-        final TableView<Category> table = new TableView<>();
-        table.setItems(categories);
-        table.setEditable(true);
+        final TableView<Category> table = categories.table();
+        amountField.setOnAction(a -> {
+            final String string = amountField.getText();
+            final int total = Integer.parseInt(string);
+            categories.updateTotal(total);
+            table.refresh(); // FIXME Shouldn't need to call refresh manually
+        });
 
-        final TableColumn<Category, String> categoryColumn = new TableColumn<>("Category");
-        categoryColumn.setCellValueFactory(new PropertyValueFactory<Category, String>("name"));
-
-        final TableColumn<Category, Integer> percentageColumn = new TableColumn<>("Percentage");
-        percentageColumn.setCellValueFactory(new PropertyValueFactory<Category, Integer>("percentage"));
-
-        final TableColumn<Category, Double> amountColumn = new TableColumn<>("Amount");
-        amountColumn.setCellValueFactory(new PropertyValueFactory<Category, Double>("amount"));
-
-        final ObservableList columns = table.getColumns();
-        columns.addAll(categoryColumn, percentageColumn, amountColumn);
         grid.add(table, 0, 2, 2, 1);
 
         final BorderPane border = new BorderPane();
@@ -245,10 +355,10 @@ public class BudgetGui extends Application {
             }
             try (final BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
                 writer.write(String.format("%s%n", amountField.getText()));
-                for (final Category category : categories) {
+                for (final Category category : table.getItems()) {
                     writer.write(category.getName());
                     writer.write(",");
-                    writer.write(Integer.toString(category.getPercentage()));
+                    writer.write(Integer.toString(category.percentageProperty().getValue()));
                     writer.write(",");
                     writer.write(Double.toString(category.getAmount()));
                     writer.write(System.getProperty("line.separator"));
