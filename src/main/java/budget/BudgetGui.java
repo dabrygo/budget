@@ -4,6 +4,9 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import javafx.application.Application;
 import javafx.collections.FXCollections;
@@ -21,9 +24,60 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.stage.FileChooser;
+import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
 
 public class BudgetGui extends Application {
+
+    interface Budget {
+        int totalAmount();
+
+        int percentUnallocated();
+
+        Set<String> categories();
+
+        int percentAllocatedTo(String category);
+
+        final class Default implements Budget {
+            private final int mTotalAmount;
+            private final List<Category> mCategories;
+
+            public Default(final int totalAmount, final List<Category> categories) {
+                mTotalAmount = totalAmount;
+                mCategories = categories;
+            }
+
+            @Override
+            public int totalAmount() {
+                return mTotalAmount;
+            }
+
+            @Override
+            public int percentUnallocated() {
+                int percentLeft = 100;
+                for (final Category category : mCategories) {
+                    percentLeft = percentLeft - category.getPercentage();
+                }
+                return percentLeft;
+            }
+
+            @Override
+            public Set<String> categories() {
+                final Set<String> names = new HashSet<>();
+                for (final Category category : mCategories) {
+                    final String name = category.getName();
+                    names.add(name);
+                }
+                return names;
+            }
+
+            @Override
+            public int percentAllocatedTo(final String category) {
+
+                return 0;
+            }
+        }
+    }
 
     /**
      * A general way of spending money in a budget.
@@ -38,10 +92,13 @@ public class BudgetGui extends Application {
         String getName();
 
         /**
-         * How much of this category is allotted in budget.
+         * What portion of budget this category has.
          */
         int getPercentage();
 
+        /**
+         * Dollar amount of portion of budget this category has.
+         */
         double getAmount();
 
         final class Default implements Category {
@@ -132,6 +189,9 @@ public class BudgetGui extends Application {
         final TextField amountField = new TextField();
         final int totalAmount = 1;
         amountField.setText(Integer.toString(totalAmount));
+        amountField.setOnAction(a -> {
+
+        });
         grid.add(amountField, 1, 0);
 
         final Label percentLeftLabel = new Label("Percent Left:");
@@ -175,12 +235,16 @@ public class BudgetGui extends Application {
         fileMenuItems.add(new MenuItem("Open"));
         final MenuItem saveItem = new MenuItem("Save");
         saveItem.setOnAction(a -> {
-            final FileChooser fileChooser = new FileChooser();
-            final File file = fileChooser.showSaveDialog(stage);
+            final FileChooser chooser = new FileChooser();
+            final ExtensionFilter textFilter = new FileChooser.ExtensionFilter("TXT files (*.txt)", "*.txt");
+            final ObservableList<ExtensionFilter> filters = chooser.getExtensionFilters();
+            filters.add(textFilter);
+            final File file = chooser.showSaveDialog(stage);
             if (file == null) {
                 throw new IllegalArgumentException("No file chosen");
             }
             try (final BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+                writer.write(String.format("%s%n", amountField.getText()));
                 for (final Category category : categories) {
                     writer.write(category.getName());
                     writer.write(",");
