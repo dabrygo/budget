@@ -6,7 +6,54 @@ import java.util.regex.Pattern;
 interface Time extends Comparable<Time> {
     String time();
 
+    default boolean after(final Time time) {
+        return compareTo(time) > 0;
+    }
+
+    default boolean before(final Time time) {
+        return compareTo(time) < 0;
+    }
+
     Time plusMinutes(int minutes);
+
+    public class Fake implements Time {
+        private final int mTime;
+
+        public Fake(final int time) {
+            mTime = time;
+        }
+
+        @Override
+        public int compareTo(final Time time) {
+            if (!(time instanceof Time.Fake)) {
+                throw new IllegalArgumentException(String.format("Cannot compare %s with %s", this, time));
+            }
+            final Time.Fake that = (Time.Fake) time;
+            if (mTime < that.mTime) {
+                return -1;
+            } else if (mTime > that.mTime) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+
+        @Override
+        public String time() {
+            return Integer.toString(mTime);
+        }
+
+        @Override
+        public Time plusMinutes(final int minutes) {
+            return new Time.Fake(mTime + minutes);
+        }
+
+        @Override
+        public boolean before(final Time time) {
+            // TODO Auto-generated method stub
+            return false;
+        }
+    }
 
     final class Standard implements Time {
         public enum State {
@@ -110,6 +157,11 @@ interface Time extends Comparable<Time> {
             } else {
                 throw new IllegalStateException("Expected states to be AM or PM");
             }
+        }
+
+        @Override
+        public String toString() {
+            return time();
         }
     }
 }
