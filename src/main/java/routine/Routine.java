@@ -7,9 +7,7 @@ public interface Routine {
     Time start();
 
     interface Time {
-        int hour();
-
-        int minute();
+        String time();
 
         final class Default implements Time {
             private final int mHour;
@@ -35,14 +33,8 @@ public interface Routine {
             }
 
             @Override
-            public int hour() {
-                return 0;
-            }
-
-            @Override
-            public int minute() {
-                // TODO Auto-generated method stub
-                return 0;
+            public String time() {
+                return String.format("%02d:%02d", mHour, mMinute);
             }
 
             @Override
