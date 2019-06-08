@@ -5,30 +5,40 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import javafx.application.Application;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
+import javafx.util.Callback;
+import javafx.util.StringConverter;
 
 public class BudgetGui extends Application {
 
@@ -284,7 +294,23 @@ public class BudgetGui extends Application {
 
                 final TableColumn<Category, Integer> percentageColumn = new TableColumn<>("Percentage");
                 percentageColumn.setCellValueFactory(new PropertyValueFactory<Category, Integer>("percentage"));
+                percentageColumn.setCellFactory(TextFieldTableCell.forTableColumn(new StringConverter<Integer>() {
+                    @Override
+                    public String toString(Integer i) {
+                        return Integer.toString(i);
+                    }
 
+                    @Override
+                    public Integer fromString(String string) {
+                        return Integer.parseInt(string);
+                    }
+                }));
+                percentageColumn.setOnEditCommit(new EventHandler<TableColumn.CellEditEvent<Category, Integer>>() {
+                    @Override
+                    public void handle(TableColumn.CellEditEvent<Category, Integer> t) {
+                        t.getRowValue().setPercentage(t.getNewValue());
+                    }
+                });
                 final TableColumn<Category, Double> amountColumn = new TableColumn<>("Amount");
                 amountColumn.setCellValueFactory(new PropertyValueFactory<Category, Double>("amount"));
 
