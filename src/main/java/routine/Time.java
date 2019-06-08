@@ -3,7 +3,7 @@ package routine;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-interface Time {
+interface Time extends Comparable<Time> {
     String time();
 
     Time plusMinutes(int minutes);
@@ -83,6 +83,33 @@ interface Time {
                 state = mState;
             }
             return new Time.Standard(newHour, newMinute, state);
+        }
+
+        @Override
+        public int compareTo(final Time time) {
+            if (!(time instanceof Time.Standard)) {
+                throw new IllegalArgumentException(String.format("Cannot compare %s with %s", this, time));
+            }
+            final Time.Standard that = (Time.Standard) time;
+            if ((that.mState == State.AM) && (mState == State.PM)) {
+                return 1;
+            } else if ((mState == State.AM) && (that.mState == State.PM)) {
+                return -1;
+            } else if (mState == that.mState) {
+                if (mHour > that.mHour) {
+                    return 1;
+                } else if (mHour < that.mHour) {
+                    return -1;
+                } else if (mMinute > that.mMinute) {
+                    return 1;
+                } else if (mMinute < that.mMinute) {
+                    return -1;
+                } else {
+                    return 0;
+                }
+            } else {
+                throw new IllegalStateException("Expected states to be AM or PM");
+            }
         }
     }
 }

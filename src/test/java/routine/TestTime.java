@@ -64,5 +64,40 @@ public class TestTime {
             final Time newTime = time.plusMinutes(2);
             assertEquals(new Time.Standard(12, 1, State.PM), newTime);
         }
+
+        @Test
+        public void compareToEqual() {
+            final Time a = Time.Standard.from("7:56 AM");
+            final Time b = Time.Standard.from("7:56 AM");
+            assertEquals(0, a.compareTo(b));
+        }
+
+        @Test
+        public void compareToBothAm() {
+            final Time a = Time.Standard.from("7:56 AM");
+            final Time b = Time.Standard.from("9:01 AM");
+            assertEquals(1, b.compareTo(a));
+            assertEquals(-1, a.compareTo(b));
+            // final Time d = Time.Standard.from("2:09 PM");
+            // final Time e = Time.Standard.from("8:53 AM");
+            //
+            // assertEquals(1, )
+        }
+
+        @Test
+        public void compareToOneAmOnePm() {
+            final Time a = Time.Standard.from("7:56 PM");
+            final Time b = Time.Standard.from("9:01 AM");
+            assertEquals(-1, b.compareTo(a));
+            assertEquals(1, a.compareTo(b));
+        }
+
+        @Test
+        public void compareToBothPm() {
+            final Time a = Time.Standard.from("7:56 PM");
+            final Time b = Time.Standard.from("7:01 PM");
+            assertEquals(-1, b.compareTo(a));
+            assertEquals(1, a.compareTo(b));
+        }
     }
 }
