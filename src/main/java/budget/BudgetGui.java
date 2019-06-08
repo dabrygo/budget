@@ -4,29 +4,23 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import javafx.application.Application;
-import javafx.beans.binding.Bindings;
-import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
-import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
@@ -37,7 +31,6 @@ import javafx.scene.layout.GridPane;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
-import javafx.util.Callback;
 import javafx.util.StringConverter;
 
 public class BudgetGui extends Application {
@@ -93,7 +86,7 @@ public class BudgetGui extends Application {
     }
 
     /**
-     * A general way of spending money in a budget.
+     * Type of related expenses.
      * 
      * @author dbgod
      *
@@ -243,9 +236,11 @@ public class BudgetGui extends Application {
 
         final class Default implements Categories {
             private final ObservableList<Category> mCategories;
+            private final TextField mPercentageLeftField;
 
-            public Default(final ObservableList<Category> categories) {
+            public Default(final ObservableList<Category> categories, final TextField percentageLeftField) {
                 mCategories = categories;
+                mPercentageLeftField = percentageLeftField;
             }
 
             @Override
@@ -274,12 +269,12 @@ public class BudgetGui extends Application {
 
             @Override
             public int percentageLeft() {
-                int total = 100;
+                int percentageLeft = 100;
                 for (final Category category : mCategories) {
                     final int percentage = category.percentageProperty().getValue();
-                    total -= percentage;
+                    percentageLeft -= percentage;
                 }
-                return total;
+                return percentageLeft;
             }
 
             @Override
@@ -309,6 +304,8 @@ public class BudgetGui extends Application {
                     @Override
                     public void handle(TableColumn.CellEditEvent<Category, Integer> t) {
                         t.getRowValue().setPercentage(t.getNewValue());
+                        mPercentageLeftField.setText(Integer.toString(percentageLeft()));
+                        table.refresh();
                     }
                 });
                 final TableColumn<Category, Double> amountColumn = new TableColumn<>("Amount");
@@ -320,13 +317,13 @@ public class BudgetGui extends Application {
             }
         }
 
-        static Categories standard(final int totalAmount) {
+        static Categories standard(final int totalAmount, final TextField percentageLeftField) {
             ObservableList<Category> categories = FXCollections.observableArrayList(Category.gifts(totalAmount),
                     Category.saving(totalAmount), Category.housing(totalAmount), Category.utilities(totalAmount),
                     Category.food(totalAmount), Category.transportation(totalAmount), Category.clothing(totalAmount),
                     Category.medical(totalAmount), Category.personal(totalAmount), Category.recreation(totalAmount),
                     Category.debts(totalAmount));
-            return new Categories.Default(categories);
+            return new Categories.Default(categories, percentageLeftField);
         }
     }
 
@@ -345,14 +342,14 @@ public class BudgetGui extends Application {
         amountField.setText(Integer.toString(totalAmount));
         grid.add(amountField, 1, 0);
 
-        final Label percentLeftLabel = new Label("Percent Left:");
-        grid.add(percentLeftLabel, 0, 1);
-        final TextField percentLeftField = new TextField();
-        percentLeftField.setEditable(false);
+        final Label percentageLeftLabel = new Label("Percent Left:");
+        grid.add(percentageLeftLabel, 0, 1);
+        final TextField percentageLeftField = new TextField();
+        percentageLeftField.setEditable(false);
 
-        final Categories categories = Categories.standard(totalAmount);
-        percentLeftField.setText(Integer.toString(categories.percentageLeft()));
-        grid.add(percentLeftField, 1, 1);
+        final Categories categories = Categories.standard(totalAmount, percentageLeftField);
+        percentageLeftField.setText(Integer.toString(categories.percentageLeft()));
+        grid.add(percentageLeftField, 1, 1);
 
         final TableView<Category> table = categories.table();
         amountField.setOnAction(a -> {
