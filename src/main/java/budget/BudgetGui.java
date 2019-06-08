@@ -28,6 +28,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
@@ -182,6 +183,14 @@ public class BudgetGui extends Application {
             return new Category.Default("Gifts", 10, totalAmount);
         }
 
+        static Category tithe(final int totalAmount) {
+            return new Category.Default("Gifts.Tithe", 10, totalAmount);
+        }
+
+        static Category giftsOther(final int totalAmount) {
+            return new Category.Default("Gifts.Other", 2, totalAmount);
+        }
+
         static Category saving(final int totalAmount) {
             return new Category.Default("Saving", 5, totalAmount);
         }
@@ -194,16 +203,44 @@ public class BudgetGui extends Application {
             return new Category.Default("Utilities", 5, totalAmount);
         }
 
+        static Category phone(final int totalAmount) {
+            return new Category.Default("Utilities.Phone", 2, totalAmount);
+        }
+
+        static Category utilitiesOther(final int totalAmount) {
+            return new Category.Default("Utilities.Other", 3, totalAmount);
+        }
+
         static Category food(final int totalAmount) {
             return new Category.Default("Food", 5, totalAmount);
+        }
+
+        static Category grocery(final int totalAmount) {
+            return new Category.Default("Food.Grocery", 4, totalAmount);
+        }
+
+        static Category eatOut(final int totalAmount) {
+            return new Category.Default("Food.EatOut", 1, totalAmount);
         }
 
         static Category transportation(final int totalAmount) {
             return new Category.Default("Transportation", 10, totalAmount);
         }
 
+        static Category autoInsurance(final int totalAmount) {
+            return new Category.Default("Transportation.AutoInsurance", 2, totalAmount);
+        }
+
+        static Category gas(final int totalAmount) {
+            return new Category.Default("Transportation.Gas", 2, totalAmount);
+        }
+
+        static Category maintenance(final int totalAmount) {
+            return new Category.Default("Transportation.Maintenance", 6, totalAmount);
+        }
+
         static Category clothing(final int totalAmount) {
-            return new Category.Default("Clothing", 10, totalAmount);
+            return new Category.Default("Clothing", 2, totalAmount);
         }
 
         static Category medical(final int totalAmount) {
@@ -220,6 +257,18 @@ public class BudgetGui extends Application {
 
         static Category debts(final int totalAmount) {
             return new Category.Default("Debts", 5, totalAmount);
+        }
+
+        static Category carPayment(final int totalAmount) {
+            return new Category.Default("Debts.Car", 4, totalAmount);
+        }
+
+        static Category creditCard(final int totalAmount) {
+            return new Category.Default("Debts.CreditCard", 1, totalAmount);
+        }
+
+        static Category flex(final int totalAmount) {
+            return new Category.Default("Flex", 1, totalAmount);
         }
     }
 
@@ -263,7 +312,6 @@ public class BudgetGui extends Application {
             public void updateTotal(final int newTotal) {
                 for (final Category category : mCategories) {
                     category.setTotalAmount(newTotal);
-                    System.out.println(category.getAmount());
                 }
             }
 
@@ -325,11 +373,21 @@ public class BudgetGui extends Application {
                     Category.debts(totalAmount));
             return new Categories.Default(categories, percentageLeftField);
         }
+
+        static Categories mockSubcategories(final int totalAmount, final TextField percentageLeftField) {
+            ObservableList<Category> categories = FXCollections.observableArrayList(Category.tithe(totalAmount),
+                    Category.giftsOther(totalAmount), Category.saving(totalAmount), Category.housing(totalAmount),
+                    Category.phone(totalAmount), Category.utilitiesOther(totalAmount), Category.grocery(totalAmount),
+                    Category.eatOut(totalAmount), Category.autoInsurance(totalAmount),
+                    Category.maintenance(totalAmount), Category.gas(totalAmount), Category.clothing(totalAmount),
+                    Category.medical(totalAmount), Category.personal(totalAmount), Category.recreation(totalAmount),
+                    Category.carPayment(totalAmount), Category.creditCard(totalAmount), Category.flex(totalAmount));
+            return new Categories.Default(categories, percentageLeftField);
+        }
     }
 
     @Override
     public void start(Stage stage) throws Exception {
-
         final GridPane grid = new GridPane();
         grid.setHgap(10);
         grid.setVgap(10);
@@ -347,7 +405,7 @@ public class BudgetGui extends Application {
         final TextField percentageLeftField = new TextField();
         percentageLeftField.setEditable(false);
 
-        final Categories categories = Categories.standard(totalAmount, percentageLeftField);
+        final Categories categories = Categories.mockSubcategories(totalAmount, percentageLeftField);
         percentageLeftField.setText(Integer.toString(categories.percentageLeft()));
         grid.add(percentageLeftField, 1, 1);
 
@@ -358,8 +416,9 @@ public class BudgetGui extends Application {
             categories.updateTotal(total);
             table.refresh(); // FIXME Shouldn't need to call refresh manually
         });
-
-        grid.add(table, 0, 2, 2, 1);
+        grid.add(table, 1, 2, 1, 1);
+        GridPane.setHgrow(table, Priority.ALWAYS);
+        GridPane.setVgrow(table, Priority.ALWAYS);
 
         final BorderPane border = new BorderPane();
         final MenuBar menuBar = new MenuBar();
@@ -396,6 +455,8 @@ public class BudgetGui extends Application {
         border.setCenter(grid);
 
         final Scene scene = new Scene(border);
+        stage.setWidth(500);
+        stage.setHeight(700);
         stage.setScene(scene);
         stage.show();
     }
