@@ -6,8 +6,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import routine.Routine.Time;
-import routine.Routine.Time.Standard.State;
+import routine.Time.Standard.State;
 
 public class TestTime {
 
@@ -57,6 +56,13 @@ public class TestTime {
                 fail();
             } catch (final IllegalStateException e) {
             }
+        }
+
+        @Test
+        public void plusMinutesCrossState() {
+            final Time time = Time.Standard.from("11:59 AM");
+            final Time newTime = time.plusMinutes(2);
+            assertEquals(new Time.Standard(12, 1, State.PM), newTime);
         }
     }
 }
