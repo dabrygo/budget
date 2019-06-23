@@ -1,7 +1,6 @@
 package budget.remake;
 
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -65,13 +64,12 @@ interface Category {
         }
 
         double unallocated() {
-            double remaining = mWeight;
-            for (final Entry<String, Category> entry : mSubcategories.entrySet()) {
-                final Category category = entry.getValue();
-                final double subcategoryWeight = category.weight();
-                remaining -= subcategoryWeight;
+            final Category unallocatedCategory = Category.unallocated(0.0);
+            final String unallocatedName = unallocatedCategory.name();
+            if (!mSubcategories.containsKey(unallocatedName)) {
+                return mWeight;
             }
-            return remaining;
+            return mSubcategories.get(unallocatedName).weight();
         }
 
         @Override
