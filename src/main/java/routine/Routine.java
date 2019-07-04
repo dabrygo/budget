@@ -1,10 +1,17 @@
 package routine;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 public interface Routine {
     void add(Task task);
+
+    void save(Path path) throws IOException;
 
     final class Default implements Routine {
         private final List<Task> mTasks;
@@ -58,6 +65,15 @@ public interface Routine {
                 builder.append(line);
             }
             return builder.toString();
+        }
+
+        @Override
+        public void save(final Path path) throws IOException {
+            final File file = path.toFile();
+            try (final FileWriter fileWriter = new FileWriter(file);
+                    final BufferedWriter writer = new BufferedWriter(fileWriter)) {
+                writer.write(toString());
+            }
         }
 
     }
