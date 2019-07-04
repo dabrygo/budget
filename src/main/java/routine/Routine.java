@@ -6,9 +6,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
-public interface Routine {
+public interface Routine extends Iterable<Task> {
     void add(Task task);
 
     void save(Path path) throws IOException;
@@ -74,6 +75,11 @@ public interface Routine {
                     final BufferedWriter writer = new BufferedWriter(fileWriter)) {
                 writer.write(toString());
             }
+        }
+
+        @Override
+        public Iterator<Task> iterator() {
+            return mTasks.iterator();
         }
 
     }
