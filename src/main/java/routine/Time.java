@@ -201,7 +201,7 @@ interface Time extends Comparable<Time> {
             final int newMinute = minuteDifference % 60;
             final int newHour = mHour + hourDifference;
             final State state;
-            if ((newHour + hourDifference) > 23) {
+            if ((newHour + hourDifference) > 12) {
                 if (mState.equals(State.PM)) {
                     throw new IllegalStateException(String.format(
                             "%d minutes past %s crosses days, which is not currently supported", minutes, time()));
