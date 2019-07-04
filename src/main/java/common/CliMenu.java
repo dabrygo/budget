@@ -1,21 +1,20 @@
 package common;
 
-import java.util.Arrays;
 import java.util.List;
 
-public interface CliMenu {
+import routine.Routine;
+
+public interface CliMenu<T> {
     String menu();
+
+    T choose(int option) throws Exception;
 
     int quit();
 
-    final class Default implements CliMenu {
-        private final List<String> mOptions;
+    final class RoutineMenu implements CliMenu<Routine> {
+        private final List<CliOption<Routine>> mOptions;
 
-        public Default(final String... options) {
-            this(Arrays.asList(options));
-        }
-
-        public Default(final List<String> options) {
+        public RoutineMenu(final List<CliOption<Routine>> options) {
             mOptions = options;
         }
 
@@ -23,12 +22,11 @@ public interface CliMenu {
         public String menu() {
             final StringBuilder builder = new StringBuilder();
             for (int i = 0; i < mOptions.size(); i++) {
-                final String option = mOptions.get(i);
-                final String line = line(i + 1, option);
+                final CliOption<?> option = mOptions.get(i);
+                final String description = option.description();
+                final String line = line(i + 1, description);
                 builder.append(line);
             }
-            final String quitLine = line(quit(), "Quit");
-            builder.append(quitLine);
             builder.append(">>> ");
             return builder.toString();
         }
@@ -40,6 +38,12 @@ public interface CliMenu {
         @Override
         public int quit() {
             return mOptions.size() + 1;
+        }
+
+        @Override
+        public Routine choose(final int index) throws Exception {
+            final CliOption<Routine> option = mOptions.get(index);
+            return option.execute();
         }
     }
 }

@@ -10,8 +10,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public interface RoutineFile {
     Routine read(Path path) throws FileNotFoundException, IOException;
@@ -31,7 +29,7 @@ public interface RoutineFile {
                 while ((line = reader.readLine()) != null) {
                     final String[] fields = line.split(",");
                     final String timeString = fields[0];
-                    final Time time = time(timeString);
+                    final Time time = Time.Military.from(timeString);
                     System.out.println(time);
 
                     final String description = fields[1];
@@ -43,29 +41,6 @@ public interface RoutineFile {
                 }
             }
             return new Routine.Default(tasks);
-        }
-
-        private Time time(final String line) throws IOException {
-            final Pattern pattern = Pattern.compile("(\\d+):(\\d+) (\\w{2})");
-            final Matcher matcher = pattern.matcher(line);
-            final boolean found = matcher.find();
-            if (!found) {
-                throw new IOException("Could not parse " + line);
-            }
-            final int hour = Integer.parseInt(matcher.group(1));
-            final int minute = Integer.parseInt(matcher.group(2));
-
-            final String readState = matcher.group(3);
-            final Time.Standard.State state;
-            if (readState.equals("AM")) {
-                state = Time.Standard.State.AM;
-            } else if (readState.equals("PM")) {
-                state = Time.Standard.State.PM;
-            } else {
-                throw new IOException("Could not parse " + readState);
-            }
-            final Time time = new Time.Standard(hour, minute, state);
-            return time;
         }
 
         @Override
