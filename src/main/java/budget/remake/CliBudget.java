@@ -1,57 +1,151 @@
 package budget.remake;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
+import common.CliMenu;
+import common.CliOption;
+
 public class CliBudget {
-    public static void main(final String[] args) {
-        final Category budget = new Category.Default("Budget");
 
-        final Category category = budget;
-        int option;
-        try (final Scanner scanner = new Scanner(System.in)) {
-            do {
-                System.out.println("1. Add new category");
-                System.out.println("2. Add new subcategory");
-                System.out.println("3. Display budget");
-                System.out.println("4. Exit");
-                System.out.print(">>> ");
-                option = scanner.nextInt();
-                if (option == 1) {
-                    System.out.print("New category name: ");
-                    final String name = scanner.next();
+    final static class AddCategory implements CliOption<Budget> {
+        private final Budget mBudget;
+        private final Scanner mScanner;
 
-                    System.out.print("New category weight: ");
-                    final int weight = scanner.nextInt();
-                    category.subcategorize(weight, name);
-                } else if (option == 2) {
-                    System.out.print("Existing category name: ");
-                    final String name = scanner.next();
-                    final Category subcategory = budget.subcategory(name);
+        public AddCategory(final Budget budget, final Scanner scanner) {
+            mBudget = budget;
+            mScanner = scanner;
+        }
 
-                    System.out.print("New subcategory name: ");
-                    final String subcategoryName = scanner.next();
+        @Override
+        public Budget execute() throws Exception {
+            System.out.print("New category name: ");
+            final String name = mScanner.nextLine();
 
-                    System.out.print("New subcategory weight: ");
-                    final int weight = scanner.nextInt();
-                    subcategory.subcategorize(weight, subcategoryName);
-                } else if (option == 3) {
-                    display("", budget);
-                } else {
-                    throw new IllegalArgumentException("Unknown option " + option);
+            final String[] categories = name.split("\\.");
+            if (categories.length == 1) {
+                System.out.print("New category weight: ");
+                final int weight = Integer.parseInt(mScanner.nextLine());
+
+                final Category category = new Category.Default(name, weight);
+                mBudget.add(category);
+                return mBudget;
+            } else if (categories.length == 2) {
+                final String categoryName = categories[0];
+                final Category category = category(categoryName);
+                final String subcategoryName = categories[1];
+
+                System.out.print("New category weight: ");
+                final int weight = Integer.parseInt(mScanner.nextLine());
+
+                category.subcategorize(weight, subcategoryName);
+                return mBudget;
+            } else if (categories.length > 2) {
+                throw new UnsupportedOperationException("Limited to only one subcategory level");
+            }
+            return mBudget;
+        }
+
+        private Category category(final String name) {
+            for (final Category category : mBudget.categories()) {
+                if (category.name().equals(name)) {
+                    return category;
                 }
-            } while (option != 4);
+            }
+            throw new IllegalArgumentException("Cannot find category " + name);
+        }
+
+        @Override
+        public String description() {
+            return "Add spending category";
         }
     }
 
-    private static void display(final String indent, final Category budget) {
-        for (final String name : budget.subcategories()) {
-            final Category subcategory = budget.subcategory(name);
-            if (subcategory.weight() == 0) {
-                return;
+    final static class ViewBudget implements CliOption<Budget> {
+        private final Budget mBudget;
+
+        public ViewBudget(final Budget budget) {
+            mBudget = budget;
+        }
+
+        @Override
+        public Budget execute() throws Exception {
+            for (final Category category : mBudget.categories()) {
+                System.out.println(category.name() + " " + category.weight());
+                for (final String subcategoryName : category.subcategories()) {
+                    final Category subcategory = category.subcategory(subcategoryName);
+                    System.out.println("   " + subcategoryName + " " + subcategory.weight());
+                }
             }
-            System.out.println(indent + name + " " + subcategory.weight());
-            if (!subcategory.subcategories().isEmpty()) {
-                display(indent + "  ", subcategory);
+            return mBudget;
+        }
+
+        @Override
+        public String description() {
+            return "View budget";
+        }
+    }
+
+    final static class SaveBudget implements CliOption<Budget> {
+        private final Budget mBudget;
+        private final Scanner mScanner;
+
+        public SaveBudget(final Budget budget, final Scanner scanner) {
+            mBudget = budget;
+            mScanner = scanner;
+        }
+
+        @Override
+        public Budget execute() throws IOException {
+            final BudgetFile file = new BudgetFile.Csv();
+            System.out.print("Enter filename\n>> ");
+            final String input = mScanner.nextLine();
+            final Path path = Paths.get("saves", input);
+            file.write(path, mBudget);
+            return mBudget;
+        }
+
+        @Override
+        public String description() {
+            return "Save budget";
+        }
+    }
+
+    final static class Quit implements CliOption<Budget> {
+        @Override
+        public Budget execute() throws IOException {
+            System.exit(0);
+            return null;
+        }
+
+        @Override
+        public String description() {
+            return "Quit";
+        }
+    }
+
+    public static void main(final String[] args) throws Exception {
+        // final Category budget = new Category.Default("Budget");
+        Budget budget = new Budget.Default();
+
+        int option;
+        try (final Scanner scanner = new Scanner(System.in)) {
+            while (true) {
+                final List<CliOption<Budget>> options = new ArrayList<>();
+                options.add(new AddCategory(budget, scanner));
+                options.add(new ViewBudget(budget));
+                options.add(new SaveBudget(budget, scanner));
+                // options.add(new LoadTasks(scanner));
+                options.add(new Quit());
+                final CliMenu<Budget> menu = new CliMenu.BudgetMenu(options);
+                System.out.println(menu.menu());
+                option = Integer.parseInt(scanner.nextLine());
+                scanner.reset();
+                budget = menu.choose(option - 1);
             }
         }
     }

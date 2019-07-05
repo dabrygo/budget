@@ -1,7 +1,7 @@
 package budget.remake;
 
+import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 
 interface Category {
@@ -11,7 +11,7 @@ interface Category {
 
     void subcategorize(double weight, String subcategory);
 
-    Set<String> subcategories();
+    Collection<String> subcategories();
 
     Category subcategory(String name);
 
@@ -78,7 +78,7 @@ interface Category {
         }
 
         @Override
-        public Set<String> subcategories() {
+        public Collection<String> subcategories() {
             return mSubcategories.keySet();
         }
 
